@@ -149,11 +149,24 @@ var UIController = (function () {
         dateLablel: ".budget__title--month"
     }
 
-    var formatNumber = function (x) {
-        x = Math.abs(x);
-        x = x.toFixed(2);
-        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-    };
+    const formatNumber = function (num, type) {
+        let numSplit, int, dec;
+
+        num = Math.abs(num);
+        num = num.toFixed(2);
+
+        numSplit = num.split('.');
+
+        int = numSplit[0];
+
+        if (int.length > 3) {
+            int = int.substr(0, int.length - 3) + ',' + int.substr(int.length - 3, 3)
+        }
+
+        dec = numSplit[1];
+
+        return (type === 'exp' ? sign = '-' : '+') + ' ' + int + '.' + dec
+    }
 
     return {
         getinput: function () {
@@ -170,13 +183,13 @@ var UIController = (function () {
 
             if (type === "inc") {
                 element = DOMstrings.incomeContainer;
-                html = `<div class="item clearfix" id="inc-%id%"><div class="item__description">%descripition%</div><div class="right clearfix"><div class="item__value">${"+ "}%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>`;
+                html = `<div class="item clearfix" id="inc-%id%"><div class="item__description">%descripition%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>`;
             } else if (type === "exp") {
                 element = DOMstrings.expenseContainer;
                 html = `                        <div class="item clearfix" id="exp-%id%">
             <div class="item__description">%descripition%</div>
             <div class="right clearfix">
-                <div class="item__value">${"- "}%value%</div>
+                <div class="item__value">%value%</div>
                 <div class="item__percentage">21%</div>
                 <div class="item__delete">
                     <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button>
@@ -186,7 +199,7 @@ var UIController = (function () {
             }
             newHTML = html.replace("%id%", obj.id);
             newHTML = newHTML.replace("%descripition%", obj.descripition);
-            newHTML = newHTML.replace("%value%", formatNumber(obj.value));
+            newHTML = newHTML.replace("%value%", formatNumber(obj.value, type));
             document.querySelector(element).insertAdjacentHTML("beforeend", newHTML);
         },
 
@@ -201,9 +214,10 @@ var UIController = (function () {
         },
 
         dispayBudget: function (obj) {
-            document.querySelector(DOMstrings.budgetLabel).textContent = obj.budget;
-            document.querySelector(DOMstrings.incomeLablel).textContent = obj.totalInc;
-            document.querySelector(DOMstrings.expensesLabel).textContent = obj.totalExp;
+            let type;
+            document.querySelector(DOMstrings.budgetLabel).textContent = formatNumber(obj.budget, type);
+            document.querySelector(DOMstrings.incomeLablel).textContent = formatNumber(obj.totalInc, "inc");
+            document.querySelector(DOMstrings.expensesLabel).textContent = formatNumber(obj.totalExp, "exp");
 
 
             if (obj.percentage > 0) {
@@ -223,7 +237,7 @@ var UIController = (function () {
             }
 
             nodeListForEach(fields, function (current, index) {
-                current.textContent = percentages[index];
+                current.textContent = percentages[index] + "%";
             });
 
         },
@@ -238,8 +252,8 @@ var UIController = (function () {
             document.querySelector(DOMstrings.dateLablel).textContent = `${months[month]} ${year}`;
         },
 
-        changetype: function(){
-            document.querySelectorAll("input"+",select").forEach(el=>el.classList.toggle("red-focus"));
+        changetype: function () {
+            document.querySelectorAll("input" + ",select").forEach(el => el.classList.toggle("red-focus"));
         },
 
         getDOMstrings: function () {
@@ -265,7 +279,7 @@ var controller = (function (budgetCtrl, UICtrl) {
 
         document.querySelector(DOM.container).addEventListener("click", ctrlDeleteItem);
 
-        document.querySelector(DOM.inputType).addEventListener("change",UICtrl.changetype);
+        document.querySelector(DOM.inputType).addEventListener("change", UICtrl.changetype);
     };
 
     var updateBudget = function () {
